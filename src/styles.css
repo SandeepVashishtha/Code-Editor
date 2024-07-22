@@ -1,26 +1,42 @@
-.editor-container {
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #root {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    width: 100%;
-    padding: 20px;
-    box-sizing: border-box;
-    background-color: #f5f5f5;
-}
-
-.editor-header {
+    height: 90vh;
+    width: 90%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .header {
+    padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-}
-
-.editor-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-.run-button {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .run-button {
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -28,12 +44,31 @@
     font-size: 1rem;
     cursor: pointer;
     border-radius: 5px;
-}
-
-.run-button:hover {
+  }
+  
+  .run-button:hover {
     background-color: #45a049;
-}
-
-.editor-content {
-    flex-grow: 1;
-}
+  }
+  
+  .editor-container {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .monaco-editor {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .output-console {
+    height: 150px;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    background-color: #282c34;
+    color: white;
+    font-family: monospace;
+    overflow-y: auto;
+  }
+  
