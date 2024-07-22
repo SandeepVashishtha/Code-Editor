@@ -1,40 +1,54 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as monaco from 'monaco-editor';
 import './styles.css';
 
 const CodeEditor = () => {
-    const editorRef = useRef(null);
+  const editorRef = useRef(null);
+  const [output, setOutput] = useState('');
 
-    useEffect(() => {
-        const editor = monaco.editor.create(editorRef.current, {
-            value: [
-                'function helloWorld() {',
-                '\tconsole.log("Hello, world!");',
-                '}'
-            ].join('\n'),
-            language: 'javascript',
-            theme: 'vs-dark', // Use dark theme
-        });
+  useEffect(() => {
+    const editor = monaco.editor.create(editorRef.current, {
+      value: [
+        'function helloWorld() {',
+        '\tconsole.log("Hello, world!");',
+        '}'
+      ].join('\n'),
+      language: 'javascript',
+      theme: 'vs-dark',
+      automaticLayout: true, // Automatically adjust layout
+    });
 
-        return () => editor.dispose();
-    }, []);
+    editor.onDidLayoutChange(() => {
+      editor.layout();
+    });
 
-    const handleRunClick = () => {
-        const code = monaco.editor.getModels()[0].getValue();
-        // For now, just log the code to the console
-        console.log('Running code:\n', code);
-        // Here you can add actual code execution logic if needed
-    };
+    return () => editor.dispose();
+  }, []);
 
-    return (
-        <div className="editor-container">
-            <div className="editor-header">
-                <span className="editor-title">Custom Code Editor</span>
-                <button className="run-button" onClick={handleRunClick}>Run</button>
-            </div>
-            <div className="editor-content" ref={editorRef}></div>
-        </div>
-    );
+  const handleRunClick = () => {
+    const code = monaco.editor.getModels()[0].getValue();
+    try {
+      const result = eval(code);
+      setOutput(result !== undefined ? result : 'No output');
+    } catch (error) {
+      setOutput(error.toString());
+    }
+  };
+
+  return (
+    <div className="container">
+      <div className="header">
+        <span>Custom Code Editor</span>
+        <button className="run-button" onClick={handleRunClick}>Run</button>
+      </div>
+      <div className="editor-container">
+        <div ref={editorRef} className="monaco-editor"></div>
+      </div>
+      <div className="output-console">
+        <pre>{output}</pre>
+      </div>
+    </div>
+  );
 };
 
 export default CodeEditor;
