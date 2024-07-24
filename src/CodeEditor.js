@@ -11,15 +11,13 @@ const CodeEditor = () => {
       value: [
         'function helloWorld() {',
         '\tconsole.log("Hello, world!");',
-        '}'
+        '}',
+        '',
+        'helloWorld();'
       ].join('\n'),
       language: 'javascript',
       theme: 'vs-dark',
-      automaticLayout: true, // Automatically adjust layout
-    });
-
-    editor.onDidLayoutChange(() => {
-      editor.layout();
+      automaticLayout: true,
     });
 
     return () => editor.dispose();
@@ -27,25 +25,42 @@ const CodeEditor = () => {
 
   const handleRunClick = () => {
     const code = monaco.editor.getModels()[0].getValue();
+
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const iframeWindow = iframe.contentWindow;
+    const iframeDocument = iframe.contentDocument || iframeWindow.document;
+
+    let consoleOutput = '';
+    iframeWindow.console.log = (message) => {
+      consoleOutput += message + '\n';
+    };
+
     try {
-      const result = eval(code);
-      setOutput(result !== undefined ? result : 'No output');
+      iframeWindow.eval(code);
+      setOutput(consoleOutput || 'No output');
     } catch (error) {
       setOutput(error.toString());
     }
+
+    document.body.removeChild(iframe);
   };
 
   return (
     <div className="container">
       <div className="header">
         <span>Custom Code Editor</span>
-        <button className="run-button" onClick={handleRunClick}>Run Code</button>
+        <button className="run-button" onClick={handleRunClick}>
+          <i className="fas fa-play"></i> Run Code
+        </button>
       </div>
       <div className="editor-container">
         <div ref={editorRef} className="monaco-editor"></div>
-      </div>
-      <div className="output-console">
-        <pre>{output}</pre>
+        <div className="output-console">
+          <pre>{output}</pre>
+        </div>
       </div>
     </div>
   );
