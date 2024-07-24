@@ -39,7 +39,7 @@ const CodeEditor = () => {
     <div className="container">
       <div className="header">
         <span>Custom Code Editor</span>
-        <button className="run-button" onClick={handleRunClick}>Run</button>
+        <button className="run-button" onClick={handleRunClick}>Run Code</button>
       </div>
       <div className="editor-container">
         <div ref={editorRef} className="monaco-editor"></div>
