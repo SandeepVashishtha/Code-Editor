@@ -51,7 +51,7 @@ const CodeEditor = () => {
   return (
     <div className="container">
       <div className="header">
-        <span>Custom Code Editor</span>
+        <span>Code Editor</span>
         <button className="run-button" onClick={handleRunClick}>
           <i className="fas fa-play"></i> Run Code
         </button>
