@@ -18,7 +18,7 @@ body, html {
 .container {
   display: flex;
   flex-direction: column;
-  height: auto;
+  height: 97vh;
   width: 100%;
   background-color: white;
   border: 1px solid #ccc;
