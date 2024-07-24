@@ -4,7 +4,7 @@ body, html {
   height: 100%;
   width: 100%;
   font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
+  background-color: #272727;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -18,9 +18,8 @@ body, html {
 .container {
   display: flex;
   flex-direction: column;
-  height: 90vh;
-  width: 90%;
-  max-width: 1200px;
+  height: auto;
+  width: 100%;
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 8px;
