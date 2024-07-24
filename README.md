@@ -13,10 +13,10 @@ This is a code editor built with React and Monaco Editor. It allows users to wri
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yourusername/custom-code-editor.git
+   git clone https://github.com/SandeepVashishtha/Code-Editor.git
    ```
    ```
-   cd custom-code-editor
+   cd code-editor
    ```
 
  2. **Install dependencies:**:
