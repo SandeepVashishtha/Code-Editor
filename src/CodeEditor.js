@@ -1,65 +1,170 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as monaco from 'monaco-editor';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import Editor from "@monaco-editor/react";
 import './styles.css';
+import useResizeObserver from './useResizeObserver';
 
 const CodeEditor = () => {
-  const editorRef = useRef(null);
+  const [code, setCode] = useState(`function helloWorld() {
+  console.log("Hello, world!");
+}
+
+helloWorld();`);
   const [output, setOutput] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const editorRef = useRef(null);
+  const [pyodideLoading, setPyodideLoading] = useState(false);
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
 
-  useEffect(() => {
-    const editor = monaco.editor.create(editorRef.current, {
-      value: [
-        'function helloWorld() {',
-        '\tconsole.log("Hello, world!");',
-        '}',
-        '',
-        'helloWorld();'
-      ].join('\n'),
-      language: 'javascript',
-      theme: 'vs-dark',
-      automaticLayout: true,
+  const handleEditorDidMount = (editor, monaco) => {
+    editorRef.current = editor;
+  };
+
+  const handleRunCode = async () => {
+    let result = '';
+    switch (language) {
+      case 'javascript':
+        result = await executeJavaScript(code);
+        break;
+      case 'python':
+        if (pyodideReady) {
+          result = await pythonExecute(code);
+        } else {
+          result = "Pyodide is not ready yet. Please wait and try again.";
+        }
+        break;
+      default:
+        result = 'Language not supported yet.';
+    }
+    setOutput(result);
+  };
+
+  const executeJavaScript = (code) => {
+    return new Promise((resolve) => {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const iframeWindow = iframe.contentWindow;
+      
+      let consoleOutput = '';
+      iframeWindow.console.log = (message) => {
+        consoleOutput += message + '\n';
+      };
+
+      try {
+        iframeWindow.eval(code);
+        resolve(consoleOutput || 'No output');
+      } catch (error) {
+        resolve(error.toString());
+      } finally {
+        document.body.removeChild(iframe);
+      }
     });
+  };
 
-    return () => editor.dispose();
+  const handleLanguageChange = (event) => {
+    setLanguage(event.target.value);
+    // Set default code for each language
+    switch (event.target.value) {
+      case 'javascript':
+        setCode(`function helloWorld() {
+  console.log("Hello, world!");
+}
+
+helloWorld();`);
+        break;
+      case 'python':
+        setCode(`def hello_world():
+    print("Hello, world!")
+
+hello_world()`);
+        break;
+      default:
+        setCode('// Code here');
+    }
+  };
+
+  const handleResize = useCallback(() => {
+    if (editorRef.current) {
+      editorRef.current.layout();
+    }
   }, []);
 
-  const handleRunClick = () => {
-    const code = monaco.editor.getModels()[0].getValue();
+  const resizeRef = useResizeObserver(handleResize);
 
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const iframeWindow = iframe.contentWindow;
-    const iframeDocument = iframe.contentDocument || iframeWindow.document;
-
-    let consoleOutput = '';
-    iframeWindow.console.log = (message) => {
-      consoleOutput += message + '\n';
+  useEffect(() => {
+    const loadPyodide = async () => {
+      setPyodideLoading(true);
+      try {
+        pyodideRef.current = await window.loadPyodide({
+          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.22.1/full/"
+        });
+        setPyodideReady(true);
+      } catch (error) {
+        console.error("Failed to load Pyodide:", error);
+      } finally {
+        setPyodideLoading(false);
+      }
     };
 
-    try {
-      iframeWindow.eval(code);
-      setOutput(consoleOutput || 'No output');
-    } catch (error) {
-      setOutput(error.toString());
+    loadPyodide();
+  }, []);
+
+  const pythonExecute = async (code) => {
+    if (!pyodideRef.current) {
+      return "Pyodide is not loaded yet.";
     }
 
-    document.body.removeChild(iframe);
+    try {
+      await pyodideRef.current.loadPackagesFromImports(code);
+      let output = '';
+      pyodideRef.current.globals.set('print', (s) => {
+        output += s + '\n';
+      });
+      await pyodideRef.current.runPythonAsync(code);
+      return output || 'No output';
+    } catch (error) {
+      return error.toString();
+    }
   };
 
   return (
-    <div className="container">
+    <div className="container" ref={resizeRef}>
       <div className="header">
-        <span>Code Editor</span>
-        <button className="run-button" onClick={handleRunClick}>
-          <i className="fas fa-play"></i> Run Code
-        </button>
+        <div className="header-title">Code Editor</div>
+        <div className="header-controls">
+          <select value={language} onChange={handleLanguageChange}>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+          </select>
+          <button className="run-button" onClick={handleRunCode}>
+            <i className="fas fa-play"></i> Run Code
+          </button>
+        </div>
       </div>
       <div className="editor-container">
-        <div ref={editorRef} className="monaco-editor"></div>
+        <div className="monaco-editor">
+          <Editor
+            height="100%"
+            defaultLanguage={language}
+            language={language}
+            value={code}
+            onMount={handleEditorDidMount}
+            onChange={(value) => setCode(value)}
+            theme="vs-dark"
+            options={{
+              backgroundColor: '#1e1e1e'
+            }}
+          />
+        </div>
         <div className="output-console">
-          <pre>{output}</pre>
+          <h3>Output:</h3>
+          {pyodideLoading ? (
+            <p>Loading Pyodide...</p>
+          ) : (
+            <pre>{output}</pre>
+          )}
         </div>
       </div>
     </div>

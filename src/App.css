@@ -36,3 +36,33 @@
     transform: rotate(360deg);
   }
 }
+
+.control-panel {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+  background-color: #f0f0f0;
+}
+
+.control-panel select {
+  margin-right: 10px;
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.control-panel button {
+  padding: 5px 15px;
+  font-size: 14px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.control-panel button:hover {
+  background-color: #45a049;
+}

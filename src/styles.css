@@ -20,7 +20,7 @@ body, html {
   flex-direction: column;
   height: 97vh;
   width: 100%;
-  background-color: white;
+  background-color: #000000; /* Changed from white to black */
   border: 1px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -37,6 +37,26 @@ body, html {
   border-bottom: 1px solid #ccc;
 }
 
+.header-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.header select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #171515;
+  color: white;
+  margin-right: 10px;
+}
+
 .run-button {
   display: flex;
   align-items: center;
@@ -51,33 +71,81 @@ body, html {
 }
 
 .run-button i {
-  margin-right: 8px; /* Adjust margin between icon and text */
+  margin-right: 8px;
 }
 
 .run-button:hover {
   background-color: #313231;
 }
 
-
 .editor-container {
   display: flex;
   flex: 1;
-  flex-direction: row; /* Changed to row for side-by-side layout */
+  flex-direction: row;
 }
 
 .monaco-editor {
-  width: 70%; /* Adjusted width for editor */
+  width: 70%;
   height: 100%;
   overflow: hidden;
+  background-color: #1e1e1e;
 }
 
 .output-console {
-  width: 30%; /* Adjusted width for output console */
-  border-left: 1px solid #ccc; /* Border between editor and console */
+  width: 30%;
+  border-left: 1px solid #ccc;
   padding: 10px;
   background-color: #282c34;
   color: white;
   font-family: monospace;
   overflow-y: auto;
   white-space: pre-wrap;
+}
+
+.code-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.editor-container {
+  flex-grow: 1;
+}
+
+.control-panel {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+  background-color: #f0f0f0;
+}
+
+.control-panel select {
+  margin-right: 10px;
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.control-panel button {
+  padding: 5px 15px;
+  font-size: 14px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.control-panel button:hover {
+  background-color: #45a049;
+}
+
+.output-container {
+  height: 200px;
+  overflow-y: auto;
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-top: 1px solid #ccc;
 }
