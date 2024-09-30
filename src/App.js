@@ -1,11 +1,14 @@
 import React from 'react';
 import './App.css';
 import CodeEditor from './CodeEditor';
+import ErrorBoundary from './ErrorBoundary';
 
 function App() {
   return (
     <div className="App">
-      <CodeEditor />
+      <ErrorBoundary>
+        <CodeEditor />
+      </ErrorBoundary>
     </div>
   );
 }

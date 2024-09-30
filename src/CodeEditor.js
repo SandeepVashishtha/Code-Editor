@@ -1,38 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as monaco from 'monaco-editor';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Editor from "@monaco-editor/react";
 import './styles.css';
+import useResizeObserver from './useResizeObserver';
 
 const CodeEditor = () => {
-  const editorRef = useRef(null);
+  const [code, setCode] = useState(`function helloWorld() {
+  console.log("Hello, world!");
+}
+
+helloWorld();`);
   const [output, setOutput] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const editorRef = useRef(null);
 
   useEffect(() => {
-    const editor = monaco.editor.create(editorRef.current, {
-      value: [
-        'function helloWorld() {',
-        '\tconsole.log("Hello, world!");',
-        '}',
-        '',
-        'helloWorld();'
-      ].join('\n'),
-      language: 'javascript',
-      theme: 'vs-dark',
-      automaticLayout: true,
-    });
-
-    return () => editor.dispose();
+    // This effect is now empty as we're using the Monaco Editor React wrapper
   }, []);
 
-  const handleRunClick = () => {
-    const code = monaco.editor.getModels()[0].getValue();
+  const handleEditorDidMount = (editor, monaco) => {
+    editorRef.current = editor;
+  };
 
+  const handleRunCode = () => {
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
 
     const iframeWindow = iframe.contentWindow;
-    const iframeDocument = iframe.contentDocument || iframeWindow.document;
-
+    
     let consoleOutput = '';
     iframeWindow.console.log = (message) => {
       consoleOutput += message + '\n';
@@ -48,17 +43,52 @@ const CodeEditor = () => {
     document.body.removeChild(iframe);
   };
 
+  const handleLanguageChange = (event) => {
+    setLanguage(event.target.value);
+  };
+
+  const handleResize = useCallback(() => {
+    if (editorRef.current) {
+      editorRef.current.layout();
+    }
+  }, []);
+
+  const resizeRef = useResizeObserver(handleResize);
+
   return (
-    <div className="container">
+    <div className="container" ref={resizeRef}>
       <div className="header">
-        <span>Code Editor</span>
-        <button className="run-button" onClick={handleRunClick}>
-          <i className="fas fa-play"></i> Run Code
-        </button>
+        <div className="header-title">Code Editor</div>
+        <div className="header-controls">
+          <select value={language} onChange={handleLanguageChange}>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="java">Java</option>
+            <option value="csharp">C#</option>
+            <option value="cpp">C++</option>
+          </select>
+          <button className="run-button" onClick={handleRunCode}>
+            <i className="fas fa-play"></i> Run Code
+          </button>
+        </div>
       </div>
       <div className="editor-container">
-        <div ref={editorRef} className="monaco-editor"></div>
+        <div className="monaco-editor">
+          <Editor
+            height="100%"
+            defaultLanguage={language}
+            language={language}
+            value={code}
+            onMount={handleEditorDidMount}
+            onChange={(value) => setCode(value)}
+            theme="vs-dark"
+            options={{
+              backgroundColor: '#1e1e1e'
+            }}
+          />
+        </div>
         <div className="output-console">
+          <h3>Output:</h3>
           <pre>{output}</pre>
         </div>
       </div>
