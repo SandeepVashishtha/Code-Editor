@@ -117,6 +117,9 @@ hello_world()`);
     }
 
     try {
+      // removing the previous execution state for pythonExecute function
+      pyodideRef.current.runPython(`globals().clear()`);
+
       await pyodideRef.current.loadPackagesFromImports(code);
       let output = '';
       pyodideRef.current.globals.set('print', (s) => {
