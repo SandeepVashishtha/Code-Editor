@@ -19,7 +19,7 @@ This is a code editor built with React and Monaco Editor. It allows users to wri
    cd code-editor
    ```
 
- 2. **Install dependencies:**:
+ 2. **Install dependencies**:
     ```bash
     npm install
     ```
