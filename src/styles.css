@@ -3,149 +3,288 @@ body, html {
   padding: 0;
   height: 100%;
   width: 100%;
-  font-family: Arial, sans-serif;
-  background-color: #272727;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1a1a1a;
+  overflow: hidden;
 }
 
 #root {
   width: 100%;
-  height: 100%;
+  height: 100vh;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  height: 97vh;
-  width: 100%;
-  background-color: #000000; /* Changed from white to black */
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  height: 100vh;
+  width: 100vw;
+  background-color: #1a1a1a;
   overflow: hidden;
+  position: relative;
 }
 
 .header {
-  padding: 15px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #0e0d10;
+  background-color: #2d2d2d;
   color: white;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #404040;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 10;
 }
 
 .header-title {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 2;
 }
 
 .header-controls {
   display: flex;
   align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
 }
 
 .header select {
-  padding: 5px 10px;
+  padding: 8px 16px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #171515;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background-color: #3d3d3d;
   color: white;
-  margin-right: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  min-width: 120px;
+}
+
+.header select:hover {
+  border-color: #666;
+  background-color: #4a4a4a;
+}
+
+.header select:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
 }
 
 .run-button {
   display: flex;
   align-items: center;
-  background-color: #171515;
+  background-color: #0078d4;
   color: white;
   border: none;
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+
+.run-button:hover {
+  background-color: #106ebe;
+  transform: translateY(-1px);
+}
+
+.run-button:active {
+  transform: translateY(0);
 }
 
 .run-button i {
   margin-right: 8px;
-}
-
-.run-button:hover {
-  background-color: #313231;
+  font-size: 12px;
 }
 
 .editor-container {
   display: flex;
   flex: 1;
-  flex-direction: row;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .monaco-editor {
-  width: 70%;
+  width: 65%;
   height: 100%;
   overflow: hidden;
   background-color: #1e1e1e;
+  border-right: 1px solid #404040;
+  position: relative;
 }
 
 .output-console {
-  width: 30%;
-  border-left: 1px solid #ccc;
-  padding: 10px;
-  background-color: #282c34;
-  color: white;
-  font-family: monospace;
+  width: 35%;
+  background-color: #252526;
+  color: #cccccc;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   overflow-y: auto;
-  white-space: pre-wrap;
-}
-
-.code-editor {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  position: relative;
 }
 
-.editor-container {
-  flex-grow: 1;
+.output-console h3 {
+  margin: 0;
+  padding: 16px 20px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #cccccc;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #404040;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
-.control-panel {
+.output-console pre {
+  margin: 0;
+  padding: 20px;
+  flex: 1;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+  background-color: transparent;
+  color: #cccccc;
+  min-height: 100px;
+}
+
+.output-console .loading-state {
+  padding: 20px;
+  text-align: center;
+  color: #0078d4;
+  font-style: italic;
   display: flex;
-  justify-content: flex-end;
-  padding: 10px;
-  background-color: #f0f0f0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.control-panel select {
-  margin-right: 10px;
-  padding: 5px 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
+.output-console .loading-state::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid #0078d4;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.run-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.run-button:disabled:hover {
+  background-color: #555;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .editor-container {
+    flex-direction: column;
+  }
+  
+  .monaco-editor {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #404040;
+  }
+  
+  .output-console {
+    width: 100%;
+    height: 50%;
+  }
+  
+  .header {
+    padding: 12px 16px;
+  }
+  
+  .header-title {
+    font-size: 1.2rem;
+  }
+  
+  .header-controls {
+    gap: 8px;
+  }
+  
+  .run-button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Scrollbar styling */
+.output-console::-webkit-scrollbar {
+  width: 8px;
+}
+
+.output-console::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.output-console::-webkit-scrollbar-thumb {
+  background: #555;
   border-radius: 4px;
-  background-color: white;
 }
 
-.control-panel button {
-  padding: 5px 15px;
-  font-size: 14px;
-  background-color: #4CAF50;
+.output-console::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(0, 120, 212, 0.3);
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
-.control-panel button:hover {
-  background-color: #45a049;
+/* Focus indicators */
+.header select:focus,
+.run-button:focus {
+  outline: 2px solid #0078d4;
+  outline-offset: 2px;
 }
 
-.output-container {
-  height: 200px;
-  overflow-y: auto;
-  background-color: #f0f0f0;
-  padding: 10px;
-  border-top: 1px solid #ccc;
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.output-console pre {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading animation improvements */
+.loading-state {
+  animation: fadeIn 0.5s ease-out;
 }

@@ -8,8 +8,8 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "monaco-editor": "^0.50.0",
-    "pyodide": "^0.26.2",
+    "monaco-editor": "^0.52.0",
+    "pyodide": "^0.27.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
@@ -18,7 +18,12 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix"
   },
   "eslintConfig": {
     "extends": [
@@ -38,7 +43,23 @@
       "last 1 safari version"
     ]
   },
+  "overrides": {
+    "nth-check": "^2.1.1",
+    "postcss": "^8.4.31",
+    "@babel/helpers": "^7.26.10",
+    "@babel/runtime": "^7.26.10"
+  },
+  "keywords": [
+    "code-editor",
+    "monaco-editor",
+    "javascript",
+    "python",
+    "pyodide",
+    "react"
+  ],
+  "homepage": ".",
   "devDependencies": {
+    "@babel/plugin-transform-private-property-in-object": "^7.26.10",
     "monaco-editor-webpack-plugin": "^7.1.0"
   }
 }
