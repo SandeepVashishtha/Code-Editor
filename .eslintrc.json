@@ -17,7 +17,7 @@
     "comma-dangle": ["error", "never"],
     "eol-last": ["error", "always"],
     "no-trailing-spaces": ["error"],
-    "max-len": ["warn", { "code": 100 }]
+    "max-len": ["warn", { "code": 175 }]
   },
   "env": {
     "browser": true,

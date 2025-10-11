@@ -24,7 +24,7 @@
     "lint:fix": "eslint src --ext .js,.jsx --fix",
     "format": "prettier --write src/**/*.{js,jsx,css,md}",
     "format:check": "prettier --check src/**/*.{js,jsx,css,md}",
-    "prepare": "husky install",
+    "prepare": "husky",
     "audit": "npm audit",
     "audit:fix": "npm audit fix"
   },

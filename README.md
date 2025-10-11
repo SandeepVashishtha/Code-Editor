@@ -32,11 +32,13 @@ A modern, interactive code editor built with React and Monaco Editor that allows
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Start the development server**:
+
    ```bash
    npm start
    ```
@@ -47,6 +49,7 @@ A modern, interactive code editor built with React and Monaco Editor that allows
 ## 🎮 Usage
 
 ### JavaScript
+
 1. Select **JavaScript** from the language dropdown
 2. Write your JavaScript code in the editor
 3. Click **▶️ Run Code** to execute
@@ -63,6 +66,7 @@ console.log(`Fibonacci(10) = ${fibonacci(10)}`);
 ```
 
 ### Python  
+
 1. Select **Python** from the language dropdown (wait for Python environment to load)
 2. Write your Python code in the editor
 3. Click **▶️ Run Code** to execute
