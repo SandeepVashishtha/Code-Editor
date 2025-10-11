@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import './styles.css';
 import useResizeObserver from './useResizeObserver';
+import ts from 'typescript';
+import { marked } from 'marked';
 
 const CodeEditor = () => {
   const [code, setCode] = useState(`// Welcome to the Code Editor! 
@@ -29,7 +31,7 @@ greetUser("Developer");
   const [pyodideError, setPyodideError] = useState(null);
   const pyodideRef = useRef(null);
 
-  const handleEditorDidMount = (editor, monaco) => {
+  const handleEditorDidMount = editor => {
     editorRef.current = editor;
   };
 
@@ -119,16 +121,10 @@ greetUser("Developer");
 
   const executeTypeScript = async code => {
     try {
-      // For now, we'll transpile TypeScript to JavaScript using a simple approach
-      // In a real implementation, you'd want to use the TypeScript compiler
-      const jsCode = code
-        .replace(/: string|: number|: boolean|: any/g, '') // Remove simple type annotations
-        .replace(/interface \w+\s*{[^}]*}/g, '') // Remove interfaces
-        .replace(/type \w+\s*=\s*[^;]+;/g, ''); // Remove type aliases
-
+      const jsCode = ts.transpile(code);
       return await executeJavaScript(jsCode);
     } catch (error) {
-      return `❌ TypeScript Error: ${error.toString()}\n\n💡 Note: This is a simplified TypeScript execution. For full TS support, consider using a proper TypeScript compiler.`;
+      return `❌ TypeScript Error: ${error.message}`;
     }
   };
 
@@ -136,7 +132,6 @@ greetUser("Developer");
     try {
       // Create a preview of HTML
       const blob = new Blob([code], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
 
       return '✅ HTML Preview Ready!\n\n📝 Your HTML code has been processed.\n🌐 To see the full preview, this would typically open in a new window or iframe.\n\n💡 Tip: Add some CSS and JavaScript to make it interactive!';
     } catch (error) {
@@ -178,20 +173,10 @@ greetUser("Developer");
       if (!code.trim()) {
         return '⚠️ No Markdown content provided.';
       }
-
-      // Basic markdown processing (simplified)
-      const processed = code
-        .replace(/^# (.*$)/gm, '📝 Heading 1: $1')
-        .replace(/^## (.*$)/gm, '📘 Heading 2: $1')
-        .replace(/^### (.*$)/gm, '📙 Heading 3: $1')
-        .replace(/\*\*(.*?)\*\*/g, '🔵 Bold: $1')
-        .replace(/\*(.*?)\*/g, '🔸 Italic: $1')
-        .replace(/`(.*?)`/g, '💻 Code: $1')
-        .replace(/^- (.*$)/gm, '• $1');
-
-      return `✅ Markdown Preview:\n\n${processed}\n\n💡 This is a simplified preview. In a full markdown editor, this would render as formatted HTML.`;
+      const html = marked(code);
+      return `✅ Markdown Preview:\n\n${html}`;
     } catch (error) {
-      return `❌ Markdown Error: ${error.toString()}`;
+      return `❌ Markdown Error: ${error.message}`;
     }
   };
 
@@ -453,6 +438,13 @@ function greet(name) {
   const resizeRef = useResizeObserver(handleResize);
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'test') {
+      // Skip Pyodide loading in test environment
+      setPyodideReady(true);
+      setPyodideLoading(false);
+      return;
+    }
+
     const loadPyodide = async () => {
       setPyodideLoading(true);
       try {
@@ -549,8 +541,8 @@ function greet(name) {
         </div>
         <div className='output-console'>
           <h3>📋 Output</h3>
-          {pyodideLoading ? (
-            <div className='loading-state'>🐍 Loading Python environment...</div>
+          {language === 'markdown' ? (
+            <div className='markdown-output' dangerouslySetInnerHTML={{ __html: output }} />
           ) : (
             <pre>{output}</pre>
           )}

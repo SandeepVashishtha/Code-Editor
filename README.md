@@ -7,7 +7,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Hacktoberfest](https://img.shields.io/badge/Hacktoberfest-2024-ff6b35?style=flat&logo=github)](https://hacktoberfest.com)
+[![Hacktoberfest](https://img.shields.io/badge/Hacktoberfest-2025-ff6b35?style=flat&logo=github)](https://hacktoberfest.com)
 
 A modern, interactive code editor built with React and Monaco Editor that allows users to write and execute **JavaScript** and **Python** code directly in the browser! 🎯
 
@@ -146,8 +146,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+<!-- markdownlint-disable MD033 -->
 <div align="center">
 
+<!-- markdownlint-disable MD036 -->
 **⭐ If you find this project helpful, please give it a star! ⭐**
 
 Made with ❤️ for the developer community
