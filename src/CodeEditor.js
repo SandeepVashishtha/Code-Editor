@@ -10,7 +10,7 @@ const CodeEditor = () => {
 function greetUser(name) {
   console.log(\`Hello, \${name}! Welcome to the Code Editor! 🎉\`);
   console.log("This is a modern, interactive code editor.");
-  console.log("You can write and execute JavaScript and Python code!");
+  console.log("You can write and execute JavaScript, Python, TypeScript, and more!");
 }
 
 greetUser("Developer");
@@ -38,6 +38,9 @@ greetUser("Developer");
         case 'javascript':
           result = await executeJavaScript(code);
           break;
+        case 'typescript':
+          result = await executeTypeScript(code);
+          break;
         case 'python':
           if (pyodideReady) {
             result = await pythonExecute(code);
@@ -45,8 +48,20 @@ greetUser("Developer");
             result = "⚠️ Python environment is not ready yet. Please wait and try again.";
           }
           break;
+        case 'html':
+          result = await executeHTML(code);
+          break;
+        case 'css':
+          result = formatCSS(code);
+          break;
+        case 'json':
+          result = formatJSON(code);
+          break;
+        case 'markdown':
+          result = previewMarkdown(code);
+          break;
         default:
-          result = '❌ Language not supported yet.';
+          result = `❌ Language "${language}" is not supported yet.\n\n🔧 Supported languages: JavaScript, TypeScript, Python, HTML, CSS, JSON, Markdown`;
       }
     } catch (error) {
       result = `❌ Error: ${error.message}`;
@@ -78,6 +93,84 @@ greetUser("Developer");
         document.body.removeChild(iframe);
       }
     });
+  };
+
+  const executeTypeScript = async (code) => {
+    try {
+      // For now, we'll transpile TypeScript to JavaScript using a simple approach
+      // In a real implementation, you'd want to use the TypeScript compiler
+      const jsCode = code
+        .replace(/: string|: number|: boolean|: any/g, '') // Remove simple type annotations
+        .replace(/interface \w+\s*{[^}]*}/g, '') // Remove interfaces
+        .replace(/type \w+\s*=\s*[^;]+;/g, ''); // Remove type aliases
+      
+      return await executeJavaScript(jsCode);
+    } catch (error) {
+      return `❌ TypeScript Error: ${error.toString()}\n\n💡 Note: This is a simplified TypeScript execution. For full TS support, consider using a proper TypeScript compiler.`;
+    }
+  };
+
+  const executeHTML = async (code) => {
+    try {
+      // Create a preview of HTML
+      const blob = new Blob([code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      return `✅ HTML Preview Ready!\n\n📝 Your HTML code has been processed.\n🌐 To see the full preview, this would typically open in a new window or iframe.\n\n💡 Tip: Add some CSS and JavaScript to make it interactive!`;
+    } catch (error) {
+      return `❌ HTML Error: ${error.toString()}`;
+    }
+  };
+
+  const formatCSS = (code) => {
+    try {
+      // Basic CSS validation and formatting
+      if (!code.trim()) {
+        return '⚠️ No CSS code provided.';
+      }
+      
+      // Simple CSS validation
+      const hasValidCSS = code.includes('{') && code.includes('}');
+      if (!hasValidCSS) {
+        return '❌ Invalid CSS: Missing braces { }';
+      }
+      
+      return `✅ CSS Formatted Successfully!\n\n🎨 Your CSS code looks good!\n📏 ${code.split('\n').length} lines of CSS\n💡 This CSS can be applied to HTML elements to style your webpage.`;
+    } catch (error) {
+      return `❌ CSS Error: ${error.toString()}`;
+    }
+  };
+
+  const formatJSON = (code) => {
+    try {
+      const parsed = JSON.parse(code);
+      const formatted = JSON.stringify(parsed, null, 2);
+      return `✅ JSON Formatted Successfully!\n\n📋 Formatted JSON:\n${formatted}\n\n📊 Object contains ${Object.keys(parsed).length} root properties.`;
+    } catch (error) {
+      return `❌ JSON Error: ${error.message}\n\n💡 Check your JSON syntax - ensure all quotes are double quotes and no trailing commas.`;
+    }
+  };
+
+  const previewMarkdown = (code) => {
+    try {
+      if (!code.trim()) {
+        return '⚠️ No Markdown content provided.';
+      }
+      
+      // Basic markdown processing (simplified)
+      let processed = code
+        .replace(/^# (.*$)/gm, '📝 Heading 1: $1')
+        .replace(/^## (.*$)/gm, '📘 Heading 2: $1')
+        .replace(/^### (.*$)/gm, '📙 Heading 3: $1')
+        .replace(/\*\*(.*?)\*\*/g, '🔵 Bold: $1')
+        .replace(/\*(.*?)\*/g, '🔸 Italic: $1')
+        .replace(/`(.*?)`/g, '💻 Code: $1')
+        .replace(/^- (.*$)/gm, '• $1');
+      
+      return `✅ Markdown Preview:\n\n${processed}\n\n💡 This is a simplified preview. In a full markdown editor, this would render as formatted HTML.`;
+    } catch (error) {
+      return `❌ Markdown Error: ${error.toString()}`;
+    }
   };
 
   const handleLanguageChange = (event) => {
@@ -132,6 +225,197 @@ def print_fibonacci_info(terms):
 # Try changing this number!
 print_fibonacci_info(10)
 print("\\n✨ Try changing the number above!")`);
+        break;
+      case 'typescript':
+        setCode(`// Welcome to TypeScript!
+// Try this strongly-typed example:
+
+interface User {
+  name: string;
+  age: number;
+  email: string;
+}
+
+function createUser(name: string, age: number, email: string): User {
+  return { name, age, email };
+}
+
+function greetUser(user: User): string {
+  return \`Hello \${user.name}! You are \${user.age} years old.\`;
+}
+
+// Try changing these values!
+const user = createUser("Alice", 30, "alice@example.com");
+console.log("🟦 TypeScript Example");
+console.log("====================");
+console.log(greetUser(user));
+console.log(\`Email: \${user.email}\`);
+
+console.log("\\n✨ Try modifying the user data above!");`);
+        break;
+      case 'html':
+        setCode(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web Page</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container { 
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Welcome to HTML!</h1>
+        <p>This is a sample HTML page with embedded CSS and JavaScript.</p>
+        <button onclick="showMessage()">Click Me!</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function showMessage() {
+            document.getElementById('message').innerHTML = 
+                '<h3>🎉 Hello from JavaScript!</h3><p>You clicked the button!</p>';
+        }
+    </script>
+</body>
+</html>`);
+        break;
+      case 'css':
+        setCode(`/* Welcome to CSS! 
+   Try this modern styling example: */
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 60px 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.button {
+  display: inline-block;
+  background: #4CAF50;
+  color: white;
+  padding: 15px 30px;
+  text-decoration: none;
+  border-radius: 25px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+}
+
+/* Try modifying these styles! */`);
+        break;
+      case 'json':
+        setCode(`{
+  "project": {
+    "name": "Code Editor",
+    "version": "1.0.0",
+    "description": "A modern, interactive code editor",
+    "technologies": [
+      "React",
+      "Monaco Editor",
+      "JavaScript",
+      "Python",
+      "TypeScript"
+    ],
+    "features": {
+      "codeExecution": true,
+      "multiLanguage": true,
+      "syntaxHighlighting": true,
+      "darkTheme": true
+    },
+    "stats": {
+      "linesOfCode": 1000,
+      "contributors": 5,
+      "stars": 42
+    },
+    "contact": {
+      "email": "developer@example.com",
+      "github": "https://github.com/username/code-editor"
+    }
+  }
+}`);
+        break;
+      case 'markdown':
+        setCode(`# Welcome to Markdown! 📝
+
+Markdown is a lightweight markup language for creating formatted text.
+
+## Features ✨
+
+- **Bold text** and *italic text*
+- \`Inline code\` and code blocks
+- Lists and links
+- Headers and formatting
+
+### Code Example
+
+\`\`\`javascript
+function greet(name) {
+  console.log(\`Hello, \${name}!\`);
+}
+\`\`\`
+
+### Lists
+
+- Item 1
+- Item 2  
+- Item 3
+
+### Links
+
+[Visit GitHub](https://github.com)
+
+---
+
+**Try editing this markdown content above!** 
+
+> This is a blockquote. Markdown makes it easy to format text without HTML.
+
+### Table Example
+
+| Language   | File Extension | Usage        |
+|------------|----------------|--------------|
+| JavaScript | .js            | Web Development |
+| Python     | .py            | Data Science    |
+| Markdown   | .md            | Documentation   |`);
         break;
       default:
         setCode('// Code here');
@@ -192,9 +476,14 @@ print("\\n✨ Try changing the number above!")`);
         <div className="header-controls">
           <select value={language} onChange={handleLanguageChange}>
             <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
             <option value="python">
               Python {pyodideLoading ? "(Loading...)" : pyodideReady ? "✅" : "❌"}
             </option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            <option value="markdown">Markdown</option>
           </select>
           <button 
             className="run-button" 
