@@ -19,9 +19,12 @@ greetUser("Developer");
   const [output, setOutput] = useState('🌟 Welcome to the Code Editor! Click "Run Code" to execute your code.');
   const [language, setLanguage] = useState('javascript');
   const [isRunning, setIsRunning] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [executionTime, setExecutionTime] = useState(null);
   const editorRef = useRef(null);
   const [pyodideLoading, setPyodideLoading] = useState(false);
   const [pyodideReady, setPyodideReady] = useState(false);
+  const [pyodideError, setPyodideError] = useState(null);
   const pyodideRef = useRef(null);
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -30,9 +33,13 @@ greetUser("Developer");
 
   const handleRunCode = async () => {
     setIsRunning(true);
+    setHasError(false);
+    setExecutionTime(null);
     setOutput('⏳ Running your code...');
     
+    const startTime = performance.now();
     let result = '';
+    
     try {
       switch (language) {
         case 'javascript':
@@ -42,10 +49,14 @@ greetUser("Developer");
           result = await executeTypeScript(code);
           break;
         case 'python':
-          if (pyodideReady) {
+          if (pyodideReady && !pyodideError) {
             result = await pythonExecute(code);
+          } else if (pyodideError) {
+            result = `❌ Python Environment Error: ${pyodideError}\n\n💡 Try refreshing the page to reload Python.`;
+            setHasError(true);
           } else {
-            result = "⚠️ Python environment is not ready yet. Please wait and try again.";
+            result = "⚠️ Python environment is still loading. Please wait and try again.";
+            setHasError(true);
           }
           break;
         case 'html':
@@ -61,11 +72,22 @@ greetUser("Developer");
           result = previewMarkdown(code);
           break;
         default:
+
           result = `❌ Language "${language}" is not supported yet.\n\n🔧 Supported languages: JavaScript, TypeScript, Python, HTML, CSS, JSON, Markdown`;
+
+          result = `❌ Language "${language}" is not supported yet.\n\n🔧 Supported languages: JavaScript, Python`;
+          setHasError(true);
+
       }
     } catch (error) {
-      result = `❌ Error: ${error.message}`;
+      console.error('Code execution error:', error);
+      result = `❌ Execution Error: ${error.message}\n\n💡 Please check your code syntax and try again.`;
+      setHasError(true);
     }
+    
+    const endTime = performance.now();
+    const timeMs = Math.round(endTime - startTime);
+    setExecutionTime(timeMs);
     
     setOutput(result || '✅ Code executed successfully (no output)');
     setIsRunning(false);

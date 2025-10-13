@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "rules": {
+    "indent": ["error", 2],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-unused-vars": ["warn"],
+    "no-console": ["warn"],
+    "prefer-const": ["error"],
+    "no-var": ["error"],
+    "arrow-spacing": ["error"],
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "comma-dangle": ["error", "never"],
+    "eol-last": ["error", "always"],
+    "no-trailing-spaces": ["error"],
+    "max-len": ["warn", { "code": 100 }]
+  },
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  }
+}
