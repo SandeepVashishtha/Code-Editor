@@ -134,11 +134,25 @@ greetUser("Developer");
 
   const executeHTML = async (code) => {
     try {
-      // Create a preview of HTML
-      const blob = new Blob([code], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
+      // Validate HTML structure
+      if (!code.trim()) {
+        return '⚠️ No HTML code provided.';
+      }
       
-      return `✅ HTML Preview Ready!\n\n📝 Your HTML code has been processed.\n🌐 To see the full preview, this would typically open in a new window or iframe.\n\n💡 Tip: Add some CSS and JavaScript to make it interactive!`;
+      // Basic HTML validation
+      const hasDoctype = code.toLowerCase().includes('<!doctype');
+      const hasHtml = code.toLowerCase().includes('<html');
+      const hasBody = code.toLowerCase().includes('<body');
+      
+      let feedback = '✅ HTML Processed Successfully!\n\n';
+      feedback += `� Analysis:\n`;
+      feedback += `- Document Type: ${hasDoctype ? '✅ Present' : '⚠️ Missing DOCTYPE'}\n`;
+      feedback += `- HTML Tag: ${hasHtml ? '✅ Present' : '⚠️ Missing <html>'}\n`;
+      feedback += `- Body Tag: ${hasBody ? '✅ Present' : '⚠️ Missing <body>'}\n`;
+      feedback += `- Lines of Code: ${code.split('\n').length}\n\n`;
+      feedback += `🌐 This HTML would render in a browser.\n💡 Tip: Add some CSS and JavaScript to make it interactive!`;
+      
+      return feedback;
     } catch (error) {
       return `❌ HTML Error: ${error.toString()}`;
     }
