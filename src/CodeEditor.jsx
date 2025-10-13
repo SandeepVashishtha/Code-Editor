@@ -134,20 +134,21 @@ greetUser("Developer");
       if (!code.trim()) {
         return '⚠️ No HTML code provided.';
       }
-      
+
       // Basic HTML validation
       const hasDoctype = code.toLowerCase().includes('<!doctype');
       const hasHtml = code.toLowerCase().includes('<html');
       const hasBody = code.toLowerCase().includes('<body');
-      
+
       let feedback = '✅ HTML Processed Successfully!\n\n';
-      feedback += `� Analysis:\n`;
+      feedback += '� Analysis:\n';
       feedback += `- Document Type: ${hasDoctype ? '✅ Present' : '⚠️ Missing DOCTYPE'}\n`;
       feedback += `- HTML Tag: ${hasHtml ? '✅ Present' : '⚠️ Missing <html>'}\n`;
       feedback += `- Body Tag: ${hasBody ? '✅ Present' : '⚠️ Missing <body>'}\n`;
       feedback += `- Lines of Code: ${code.split('\n').length}\n\n`;
-      feedback += `🌐 This HTML would render in a browser.\n💡 Tip: Add some CSS and JavaScript to make it interactive!`;
-      
+      feedback +=
+        '🌐 This HTML would render in a browser.\n💡 Tip: Add some CSS and JavaScript to make it interactive!';
+
       return feedback;
     } catch (error) {
       return `❌ HTML Error: ${error.toString()}`;
