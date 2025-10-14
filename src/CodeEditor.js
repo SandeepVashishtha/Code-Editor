@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import Editor from "@monaco-editor/react";
+import Editor from '@monaco-editor/react';
 import './styles.css';
 import useResizeObserver from './useResizeObserver';
+import AIAnalysisPanel from './components/AIAnalysisPanel';
+import geminiService from './services/geminiService';
 
 const CodeEditor = () => {
   const [code, setCode] = useState(`// Welcome to the Code Editor! 
@@ -16,19 +18,174 @@ function greetUser(name) {
 greetUser("Developer");
 
 // Try changing the name above and run the code again!`);
-  const [output, setOutput] = useState('🌟 Welcome to the Code Editor! Click "Run Code" to execute your code.');
+  const [output, setOutput] = useState(
+    '🌟 Welcome to the Code Editor! Click "Run Code" to execute your code.'
+  );
   const [language, setLanguage] = useState('javascript');
   const [isRunning, setIsRunning] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [executionTime, setExecutionTime] = useState(null);
   const editorRef = useRef(null);
+  const monacoRef = useRef(null);
+  const decorationsRef = useRef([]);
   const [pyodideLoading, setPyodideLoading] = useState(false);
   const [pyodideReady, setPyodideReady] = useState(false);
   const [pyodideError, setPyodideError] = useState(null);
   const pyodideRef = useRef(null);
 
+  // AI Analysis states
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [apiKeySet, setApiKeySet] = useState(false);
+
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
+  };
+
+  // Initialize Gemini AI Service
+  useEffect(() => {
+    const initializeAI = () => {
+      const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+      if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+        try {
+          geminiService.initialize(apiKey);
+          setApiKeySet(true);
+          setAiEnabled(true);
+          console.log('🤖 AI Assistant is ready!');
+        } catch (error) {
+          console.error('Failed to initialize AI:', error);
+          setApiKeySet(false);
+        }
+      } else {
+        console.warn('⚠️ Gemini API key not set. AI features disabled.');
+        setApiKeySet(false);
+      }
+    };
+
+    initializeAI();
+  }, []);
+
+  // AI Analysis Handler
+  const analyzeWithAI = async (errorMessage = null) => {
+    if (!apiKeySet) {
+      setAiAnalysis({
+        success: false,
+        explanation:
+          'AI Assistant is not configured. Please add your Gemini API key to the .env file.',
+        suggestions: [
+          'Get a free API key from https://aistudio.google.com/app/apikey',
+          'Add REACT_APP_GEMINI_API_KEY=your_key to .env file',
+          'Restart the development server'
+        ]
+      });
+      setShowAiPanel(true);
+      return;
+    }
+
+    setIsAiAnalyzing(true);
+    setShowAiPanel(true);
+    setAiAnalysis(null);
+
+    // Clear previous error highlights
+    clearErrorHighlights();
+
+    try {
+      let analysis;
+      if (errorMessage) {
+        // Analyze error after execution
+        analysis = await geminiService.analyzeError(code, language, errorMessage);
+      } else {
+        // Analyze code before execution
+        analysis = await geminiService.analyzeCodeBeforeRun(code, language);
+      }
+      setAiAnalysis(analysis);
+
+      // Highlight error if line number is provided
+      if (analysis.errorLine) {
+        highlightErrorLine(analysis.errorLine, analysis.errorColumn);
+      }
+    } catch (error) {
+      console.error('AI Analysis failed:', error);
+      setAiAnalysis({
+        success: false,
+        explanation: 'Failed to analyze code. Please check your internet connection and API key.',
+        suggestions: [
+          'Verify your API key is correct',
+          'Check your internet connection',
+          'Try again in a moment'
+        ]
+      });
+    } finally {
+      setIsAiAnalyzing(false);
+    }
+  };
+
+  // Highlight error line in editor
+  const highlightErrorLine = (lineNumber, columnNumber = 1) => {
+    if (!editorRef.current || !monacoRef.current) return;
+
+    const monaco = monacoRef.current;
+    const editor = editorRef.current;
+
+    // Clear previous decorations
+    clearErrorHighlights();
+
+    // Create new decoration
+    const decorations = editor.deltaDecorations(
+      [],
+      [
+        {
+          range: new monaco.Range(lineNumber, 1, lineNumber, 1000),
+          options: {
+            isWholeLine: true,
+            className: 'error-line-highlight',
+            glyphMarginClassName: 'error-glyph',
+            linesDecorationsClassName: 'error-line-decoration',
+            marginClassName: 'error-margin',
+            inlineClassName: 'error-inline',
+            minimap: {
+              color: '#ff4444',
+              position: 2
+            }
+          }
+        }
+      ]
+    );
+
+    decorationsRef.current = decorations;
+
+    // Scroll to the error line
+    editor.revealLineInCenter(lineNumber);
+
+    // Set cursor position
+    editor.setPosition({ lineNumber, column: columnNumber || 1 });
+    editor.focus();
+  };
+
+  // Clear error highlights
+  const clearErrorHighlights = () => {
+    if (editorRef.current && decorationsRef.current.length > 0) {
+      editorRef.current.deltaDecorations(decorationsRef.current, []);
+      decorationsRef.current = [];
+    }
+  };
+
+  // Apply AI suggested fix
+  const applyFix = fixedCode => {
+    if (fixedCode) {
+      setCode(fixedCode);
+      clearErrorHighlights();
+      setShowAiPanel(false);
+      setOutput('✅ Fix applied! Click "Run Code" to test the changes.');
+    }
+  };
+
+  // Handle highlight error button click
+  const handleHighlightError = (lineNumber, columnNumber) => {
+    highlightErrorLine(lineNumber, columnNumber);
   };
 
   const handleRunCode = async () => {
@@ -36,10 +193,10 @@ greetUser("Developer");
     setHasError(false);
     setExecutionTime(null);
     setOutput('⏳ Running your code...');
-    
+
     const startTime = performance.now();
     let result = '';
-    
+
     try {
       switch (language) {
         case 'javascript':
@@ -55,7 +212,7 @@ greetUser("Developer");
             result = `❌ Python Environment Error: ${pyodideError}\n\n💡 Try refreshing the page to reload Python.`;
             setHasError(true);
           } else {
-            result = "⚠️ Python environment is still loading. Please wait and try again.";
+            result = '⚠️ Python environment is still loading. Please wait and try again.';
             setHasError(true);
           }
           break;
@@ -72,37 +229,45 @@ greetUser("Developer");
           result = previewMarkdown(code);
           break;
         default:
-
           result = `❌ Language "${language}" is not supported yet.\n\n🔧 Supported languages: JavaScript, TypeScript, Python, HTML, CSS, JSON, Markdown`;
 
           result = `❌ Language "${language}" is not supported yet.\n\n🔧 Supported languages: JavaScript, Python`;
           setHasError(true);
-
       }
     } catch (error) {
       console.error('Code execution error:', error);
       result = `❌ Execution Error: ${error.message}\n\n💡 Please check your code syntax and try again.`;
       setHasError(true);
     }
-    
+
     const endTime = performance.now();
     const timeMs = Math.round(endTime - startTime);
     setExecutionTime(timeMs);
-    
+
     setOutput(result || '✅ Code executed successfully (no output)');
     setIsRunning(false);
+
+    // Check if result contains error and trigger AI analysis
+    const hasErrorInResult = result && (result.includes('❌') || result.includes('Error:'));
+    if (hasErrorInResult) {
+      setHasError(true);
+      // Trigger AI analysis for errors if enabled
+      if (aiEnabled && apiKeySet) {
+        setTimeout(() => analyzeWithAI(result), 800);
+      }
+    }
   };
 
-  const executeJavaScript = (code) => {
-    return new Promise((resolve) => {
+  const executeJavaScript = code => {
+    return new Promise(resolve => {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
 
       const iframeWindow = iframe.contentWindow;
-      
+
       let consoleOutput = '';
-      iframeWindow.console.log = (message) => {
+      iframeWindow.console.log = message => {
         consoleOutput += message + '\n';
       };
 
@@ -110,14 +275,15 @@ greetUser("Developer");
         iframeWindow.eval(code);
         resolve(consoleOutput || '✅ Code executed successfully (no console output)');
       } catch (error) {
-        resolve(`❌ JavaScript Error: ${error.toString()}`);
+        const errorResult = `❌ JavaScript Error: ${error.toString()}`;
+        resolve(errorResult);
       } finally {
         document.body.removeChild(iframe);
       }
     });
   };
 
-  const executeTypeScript = async (code) => {
+  const executeTypeScript = async code => {
     try {
       // For now, we'll transpile TypeScript to JavaScript using a simple approach
       // In a real implementation, you'd want to use the TypeScript compiler
@@ -125,59 +291,60 @@ greetUser("Developer");
         .replace(/: string|: number|: boolean|: any/g, '') // Remove simple type annotations
         .replace(/interface \w+\s*{[^}]*}/g, '') // Remove interfaces
         .replace(/type \w+\s*=\s*[^;]+;/g, ''); // Remove type aliases
-      
+
       return await executeJavaScript(jsCode);
     } catch (error) {
       return `❌ TypeScript Error: ${error.toString()}\n\n💡 Note: This is a simplified TypeScript execution. For full TS support, consider using a proper TypeScript compiler.`;
     }
   };
 
-  const executeHTML = async (code) => {
+  const executeHTML = async code => {
     try {
       // Validate HTML structure
       if (!code.trim()) {
         return '⚠️ No HTML code provided.';
       }
-      
+
       // Basic HTML validation
       const hasDoctype = code.toLowerCase().includes('<!doctype');
       const hasHtml = code.toLowerCase().includes('<html');
       const hasBody = code.toLowerCase().includes('<body');
-      
+
       let feedback = '✅ HTML Processed Successfully!\n\n';
-      feedback += `� Analysis:\n`;
+      feedback += '� Analysis:\n';
       feedback += `- Document Type: ${hasDoctype ? '✅ Present' : '⚠️ Missing DOCTYPE'}\n`;
       feedback += `- HTML Tag: ${hasHtml ? '✅ Present' : '⚠️ Missing <html>'}\n`;
       feedback += `- Body Tag: ${hasBody ? '✅ Present' : '⚠️ Missing <body>'}\n`;
       feedback += `- Lines of Code: ${code.split('\n').length}\n\n`;
-      feedback += `🌐 This HTML would render in a browser.\n💡 Tip: Add some CSS and JavaScript to make it interactive!`;
-      
+      feedback +=
+        '🌐 This HTML would render in a browser.\n💡 Tip: Add some CSS and JavaScript to make it interactive!';
+
       return feedback;
     } catch (error) {
       return `❌ HTML Error: ${error.toString()}`;
     }
   };
 
-  const formatCSS = (code) => {
+  const formatCSS = code => {
     try {
       // Basic CSS validation and formatting
       if (!code.trim()) {
         return '⚠️ No CSS code provided.';
       }
-      
+
       // Simple CSS validation
       const hasValidCSS = code.includes('{') && code.includes('}');
       if (!hasValidCSS) {
         return '❌ Invalid CSS: Missing braces { }';
       }
-      
+
       return `✅ CSS Formatted Successfully!\n\n🎨 Your CSS code looks good!\n📏 ${code.split('\n').length} lines of CSS\n💡 This CSS can be applied to HTML elements to style your webpage.`;
     } catch (error) {
       return `❌ CSS Error: ${error.toString()}`;
     }
   };
 
-  const formatJSON = (code) => {
+  const formatJSON = code => {
     try {
       const parsed = JSON.parse(code);
       const formatted = JSON.stringify(parsed, null, 2);
@@ -187,14 +354,14 @@ greetUser("Developer");
     }
   };
 
-  const previewMarkdown = (code) => {
+  const previewMarkdown = code => {
     try {
       if (!code.trim()) {
         return '⚠️ No Markdown content provided.';
       }
-      
+
       // Basic markdown processing (simplified)
-      let processed = code
+      const processed = code
         .replace(/^# (.*$)/gm, '📝 Heading 1: $1')
         .replace(/^## (.*$)/gm, '📘 Heading 2: $1')
         .replace(/^### (.*$)/gm, '📙 Heading 3: $1')
@@ -202,14 +369,14 @@ greetUser("Developer");
         .replace(/\*(.*?)\*/g, '🔸 Italic: $1')
         .replace(/`(.*?)`/g, '💻 Code: $1')
         .replace(/^- (.*$)/gm, '• $1');
-      
+
       return `✅ Markdown Preview:\n\n${processed}\n\n💡 This is a simplified preview. In a full markdown editor, this would render as formatted HTML.`;
     } catch (error) {
       return `❌ Markdown Error: ${error.toString()}`;
     }
   };
 
-  const handleLanguageChange = (event) => {
+  const handleLanguageChange = event => {
     setLanguage(event.target.value);
     // Set default code for each language
     switch (event.target.value) {
@@ -471,11 +638,11 @@ function greet(name) {
       setPyodideLoading(true);
       try {
         pyodideRef.current = await window.loadPyodide({
-          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/"
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.1/full/'
         });
         setPyodideReady(true);
       } catch (error) {
-        console.error("Failed to load Pyodide:", error);
+        console.error('Failed to load Pyodide:', error);
       } finally {
         setPyodideLoading(false);
       }
@@ -484,18 +651,18 @@ function greet(name) {
     loadPyodide();
   }, []);
 
-  const pythonExecute = async (code) => {
+  const pythonExecute = async code => {
     if (!pyodideRef.current) {
-      return "Pyodide is not loaded yet.";
+      return 'Pyodide is not loaded yet.';
     }
 
     try {
       // removing the previous execution state for pythonExecute function
-      pyodideRef.current.runPython(`globals().clear()`);
+      pyodideRef.current.runPython('globals().clear()');
 
       await pyodideRef.current.loadPackagesFromImports(code);
       let output = '';
-      pyodideRef.current.globals.set('print', (s) => {
+      pyodideRef.current.globals.set('print', s => {
         output += s + '\n';
       });
       await pyodideRef.current.runPythonAsync(code);
@@ -506,23 +673,23 @@ function greet(name) {
   };
 
   return (
-    <div className="container" ref={resizeRef}>
-      <div className="header">
-        <div className="header-title">🚀 Code Editor</div>
-        <div className="header-controls">
+    <div className='container' ref={resizeRef}>
+      <div className='header'>
+        <div className='header-title'>🚀 Code Editor</div>
+        <div className='header-controls'>
           <select value={language} onChange={handleLanguageChange}>
-            <option value="javascript">JavaScript</option>
-            <option value="typescript">TypeScript</option>
-            <option value="python">
-              Python {pyodideLoading ? "(Loading...)" : pyodideReady ? "✅" : "❌"}
+            <option value='javascript'>JavaScript</option>
+            <option value='typescript'>TypeScript</option>
+            <option value='python'>
+              Python {pyodideLoading ? '(Loading...)' : pyodideReady ? '✅' : '❌'}
             </option>
-            <option value="html">HTML</option>
-            <option value="css">CSS</option>
-            <option value="json">JSON</option>
-            <option value="markdown">Markdown</option>
+            <option value='html'>HTML</option>
+            <option value='css'>CSS</option>
+            <option value='json'>JSON</option>
+            <option value='markdown'>Markdown</option>
           </select>
-          <button 
-            className="run-button" 
+          <button
+            className='run-button'
             onClick={handleRunCode}
             disabled={(pyodideLoading && language === 'python') || isRunning}
           >
@@ -534,18 +701,41 @@ function greet(name) {
               <>▶️ Run Code</>
             )}
           </button>
+          <button
+            className='ai-check-button'
+            onClick={() => analyzeWithAI()}
+            disabled={isAiAnalyzing || !code.trim()}
+            title={apiKeySet ? 'Check code with AI' : 'AI Assistant not configured'}
+          >
+            {isAiAnalyzing ? <>⏳ Analyzing...</> : <>🤖 AI Check</>}
+          </button>
         </div>
       </div>
-      <div className="editor-container">
-        <div className="monaco-editor">
+      <div className='editor-container'>
+        <div className='monaco-editor'>
+          <div className='ai-status-bar'>
+            <span className={`ai-status ${apiKeySet ? 'active' : 'inactive'}`}>
+              {apiKeySet ? '🟢 AI Assistant Ready' : '🔴 AI Not Configured'}
+            </span>
+            {apiKeySet && (
+              <label className='ai-toggle'>
+                <input
+                  type='checkbox'
+                  checked={aiEnabled}
+                  onChange={e => setAiEnabled(e.target.checked)}
+                />
+                <span>Auto-analyze errors</span>
+              </label>
+            )}
+          </div>
           <Editor
-            height="100%"
+            height='100%'
             defaultLanguage={language}
             language={language}
             value={code}
             onMount={handleEditorDidMount}
-            onChange={(value) => setCode(value)}
-            theme="vs-dark"
+            onChange={value => setCode(value)}
+            theme='vs-dark'
             options={{
               backgroundColor: '#1e1e1e',
               fontSize: 14,
@@ -561,15 +751,29 @@ function greet(name) {
             }}
           />
         </div>
-        <div className="output-console">
+        <div className='output-console'>
           <h3>📋 Output</h3>
           {pyodideLoading ? (
-            <div className="loading-state">🐍 Loading Python environment...</div>
+            <div className='loading-state'>🐍 Loading Python environment...</div>
           ) : (
             <pre>{output}</pre>
           )}
         </div>
       </div>
+
+      {/* AI Analysis Panel */}
+      {showAiPanel && (
+        <AIAnalysisPanel
+          analysis={aiAnalysis}
+          isLoading={isAiAnalyzing}
+          onClose={() => {
+            setShowAiPanel(false);
+            clearErrorHighlights();
+          }}
+          onApplyFix={applyFix}
+          onHighlightError={handleHighlightError}
+        />
+      )}
     </div>
   );
 };
