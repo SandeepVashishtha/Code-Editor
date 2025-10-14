@@ -5,7 +5,7 @@ import ErrorBoundary from './ErrorBoundary';
 
 function App() {
   return (
-    <div className="App">
+    <div className='App'>
       <ErrorBoundary>
         <CodeEditor />
       </ErrorBoundary>
