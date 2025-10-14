@@ -4,6 +4,8 @@ import './styles.css';
 import useResizeObserver from './useResizeObserver';
 import ts from 'typescript';
 import { marked } from 'marked';
+import geminiService from './services/geminiService';
+import AIAnalysisPanel from './components/AIAnalysisPanel';
 
 const CodeEditor = () => {
   const [code, setCode] = useState(`// Welcome to the Code Editor! 
@@ -31,8 +33,91 @@ greetUser("Developer");
   const [pyodideError, setPyodideError] = useState(null);
   const pyodideRef = useRef(null);
 
+  // AI Analysis states
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [aiInitialized, setAiInitialized] = useState(false);
+
   const handleEditorDidMount = editor => {
     editorRef.current = editor;
+  };
+
+  // Initialize Gemini AI if API key is available
+  const initializeAI = useCallback(async (key) => {
+    try {
+      await geminiService.initialize(key);
+      setAiInitialized(true);
+      setApiKey(key);
+      // Store API key in localStorage for persistence
+      localStorage.setItem('gemini_api_key', key);
+      setShowApiKeyDialog(false);
+    } catch (error) {
+      console.error('Failed to initialize AI:', error);
+      alert('Failed to initialize AI. Please check your API key.');
+      setAiInitialized(false);
+    }
+  }, []);
+
+  // Load API key from localStorage on component mount
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem('gemini_api_key');
+    if (storedApiKey) {
+      initializeAI(storedApiKey);
+    }
+  }, [initializeAI]);
+
+  // Analyze code with AI
+  const analyzeCodeWithAI = async (codeToAnalyze, errorMessage = null) => {
+    if (!aiInitialized) {
+      setShowApiKeyDialog(true);
+      return;
+    }
+
+    setIsAiAnalyzing(true);
+    setShowAiPanel(true);
+
+    try {
+      let analysis;
+      if (errorMessage) {
+        // Analyze error
+        analysis = await geminiService.analyzeError(codeToAnalyze, language, errorMessage);
+      } else {
+        // Pre-execution analysis
+        analysis = await geminiService.analyzeCodeBeforeRun(codeToAnalyze, language);
+      }
+      
+      setAiAnalysis(analysis);
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+      setAiAnalysis({
+        success: false,
+        explanation: 'AI analysis failed. Please check your connection and try again.',
+        suggestions: []
+      });
+    } finally {
+      setIsAiAnalyzing(false);
+    }
+  };
+
+  // Apply AI suggested fix
+  const applyAISuggestedFix = (fixedCode) => {
+    if (fixedCode && editorRef.current) {
+      setCode(fixedCode);
+      editorRef.current.setValue(fixedCode);
+      setShowAiPanel(false);
+    }
+  };
+
+  // Highlight error in editor
+  const highlightErrorInEditor = (lineNumber, columnNumber) => {
+    if (editorRef.current && lineNumber) {
+      editorRef.current.revealLineInCenter(lineNumber);
+      editorRef.current.setPosition({ lineNumber, column: columnNumber || 1 });
+      editorRef.current.focus();
+    }
   };
 
   const handleRunCode = async () => {
@@ -93,6 +178,15 @@ greetUser("Developer");
 
     setOutput(result || '✅ Code executed successfully (no output)');
     setIsRunning(false);
+
+    // Trigger AI analysis if there's an error and AI is available
+    if (hasError && result.includes('❌') && aiInitialized) {
+      // Extract error message for AI analysis
+      const errorMessage = result.replace(/❌/g, '').replace(/💡.*$/gm, '').trim();
+      setTimeout(() => {
+        analyzeCodeWithAI(code, errorMessage);
+      }, 500); // Small delay to let the output render first
+    }
   };
 
   const executeJavaScript = code => {
@@ -515,6 +609,33 @@ function greet(name) {
             <option value='json'>JSON</option>
             <option value='markdown'>Markdown</option>
           </select>
+          
+          {/* AI Analysis Button */}
+          <button
+            className="ai-check-button"
+            onClick={() => {
+              if (!aiInitialized) {
+                setShowApiKeyDialog(true);
+              } else {
+                analyzeCodeWithAI(code);
+              }
+            }}
+            disabled={isAiAnalyzing}
+            title="Analyze code with AI (Pre-execution check)"
+            style={{
+              backgroundColor: aiInitialized ? '#8a2be2' : '#666',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              marginRight: '8px'
+            }}
+          >
+            {isAiAnalyzing ? '🤖 Analyzing...' : aiInitialized ? '🤖 AI Check' : '🤖 Setup AI'}
+          </button>
+
           <button
             className='run-button'
             onClick={handleRunCode}
@@ -564,6 +685,90 @@ function greet(name) {
           )}
         </div>
       </div>
+
+      {/* AI Analysis Panel */}
+      {(showAiPanel || isAiAnalyzing) && (
+        <AIAnalysisPanel
+          analysis={aiAnalysis}
+          isLoading={isAiAnalyzing}
+          onClose={() => {
+            setShowAiPanel(false);
+            setAiAnalysis(null);
+          }}
+          onApplyFix={applyAISuggestedFix}
+          onHighlightError={highlightErrorInEditor}
+        />
+      )}
+
+      {/* API Key Configuration Dialog */}
+      {showApiKeyDialog && (
+        <div className="ai-analysis-overlay" onClick={() => setShowApiKeyDialog(false)}>
+          <div className="ai-analysis-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="ai-panel-header">
+              <div className="ai-panel-title">
+                <span className="ai-icon">🔑</span>
+                <h3>Configure AI Assistant</h3>
+              </div>
+              <button className="ai-close-btn" onClick={() => setShowApiKeyDialog(false)}>✕</button>
+            </div>
+            <div className="ai-panel-content">
+              <div className="ai-section">
+                <h4>🤖 Gemini API Key Required</h4>
+                <p>To enable AI-powered error analysis, please provide your Gemini API key:</p>
+                <input
+                  type="password"
+                  placeholder="Enter your Gemini API key..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    marginTop: '10px',
+                    marginBottom: '15px',
+                    backgroundColor: '#1e1e1e',
+                    color: 'white',
+                    border: '1px solid #444',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setShowApiKeyDialog(false)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#666',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => initializeAI(apiKey)}
+                    disabled={!apiKey.trim()}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: apiKey.trim() ? '#4CAF50' : '#666',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: apiKey.trim() ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    Save & Enable AI
+                  </button>
+                </div>
+                <p style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
+                  💡 Get your free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF50' }}>Google AI Studio</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
