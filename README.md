@@ -27,7 +27,7 @@ A modern, interactive code editor built with React and Monaco Editor that allows
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/RhythmPahwa14/Code-Editor.git
+   git clone https://github.com/sandeepvashishtha/Code-Editor.git
    cd Code-Editor
    ```
 
