@@ -1,4 +1,5 @@
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -184,8 +185,12 @@ body, html {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .run-button:disabled {
@@ -206,31 +211,31 @@ body, html {
   .editor-container {
     flex-direction: column;
   }
-  
+
   .monaco-editor {
     width: 100%;
     height: 50%;
     border-right: none;
     border-bottom: 1px solid #404040;
   }
-  
+
   .output-console {
     width: 100%;
     height: 50%;
   }
-  
+
   .header {
     padding: 12px 16px;
   }
-  
+
   .header-title {
     font-size: 1.2rem;
   }
-  
+
   .header-controls {
     gap: 8px;
   }
-  
+
   .run-button {
     padding: 8px 16px;
     font-size: 13px;
